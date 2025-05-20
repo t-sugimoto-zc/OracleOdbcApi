@@ -7,6 +7,7 @@ COPY ./OracleOdbcApi ./OracleOdbcApi
 WORKDIR /src/OracleOdbcApi
 RUN dotnet publish -c Release -o /app/publish
 
+# --- Runtime Stage ---
 FROM ubuntu:20.04
 
 # 必要なリポジトリの追加
