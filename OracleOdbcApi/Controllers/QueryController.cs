@@ -53,7 +53,23 @@ namespace OracleOdbcApi.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = ex.Message });
+                // ODBC固有のエラー情報を含めて返す
+                return StatusCode(500, new
+                {
+                    error = "ODBCエラーが発生しました。",
+                    message = odbcEx.Message,
+                    nativeError = odbcEx.Errors.Count > 0 ? odbcEx.Errors[0].NativeError.ToString() : null,
+                    sqlState = odbcEx.Errors.Count > 0 ? odbcEx.Errors[0].SQLState : null,
+                    stackTrace = odbcEx.StackTrace
+                  }
+            catch (Exception ex)
+            {
+                // その他の例外
+                return StatusCode(500, new
+                {
+                    error = "予期しないエラーが発生しました。",
+                    message = ex.Message,
+                    stackTrace = ex.StackTrace
             }
         }
     }
