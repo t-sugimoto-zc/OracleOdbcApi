@@ -1,3 +1,12 @@
+# --- Build Stage ---
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# C# プロジェクトをコピーしてビルド
+COPY ./OracleOdbcApi ./OracleOdbcApi
+WORKDIR /src/OracleOdbcApi
+RUN dotnet publish -c Release -o /app/publish
+
 FROM ubuntu:20.04
 
 # 必要なリポジトリの追加
@@ -10,6 +19,8 @@ RUN apt-get install -y libaio1
 RUN apt-get install -y wget
 RUN apt-get install -y unzip
 RUN apt-get install -y unixodbc
+RUN apt-get install -y curl
+RUN apt-get install -y gnupg
 
 # Oracle Instant Clientのインストール
 COPY instantclient-basic-linux.x64-12.2.0.1.0.zip /opt/oracle/
@@ -47,5 +58,15 @@ COPY tnsnames.ora /opt/oracle/instantclient/network/admin/
 RUN odbcinst -i -d -f /etc/odbcinst.ini
 RUN odbcinst -q -d
 
-# コンテナを1時間起動させる
-CMD ["sleep", "3600"]
+# .NET ランタイムのインストール
+RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+RUN dpkg -i packages-microsoft-prod.deb
+RUN apt-get update
+RUN apt-get install -y aspnetcore-runtime-8.0
+RUN rm packages-microsoft-prod.deb
+
+# アプリのコピーと起動
+COPY --from=build /app/publish /app
+WORKDIR /app
+ENTRYPOINT ["dotnet", "OracleOdbcApi.dll"]
+
