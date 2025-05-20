@@ -17,13 +17,25 @@ namespace OracleOdbcApi.Controllers
         [HttpGet]
         public IActionResult Get([FromQuery] string sql)
         {
-            string connStr = _config.GetConnectionString("OracleOdbc");
-            using var conn = new OdbcConnection(connStr);
-            using var cmd = new OdbcCommand(sql, conn);
+            // SQLクエリが指定されていない場合
+            if (string.IsNullOrWhiteSpace(sql))
+            {
+                return BadRequest(new { error = "SQLクエリが指定されていません。" });
+            }
+
+            // 接続文字列の取得とnullチェック
+            string? connStr = _config.GetConnectionString("OracleOdbc");
+            if (string.IsNullOrWhiteSpace(connStr))
+            {
+                return StatusCode(500, new { error = "接続文字列が設定されていません。" });
+            }
 
             try
             {
+                using var conn = new OdbcConnection(connStr);
+                using var cmd = new OdbcCommand(sql, conn);
                 conn.Open();
+
                 using var reader = cmd.ExecuteReader();
                 var results = new List<Dictionary<string, object>>();
 
@@ -31,7 +43,9 @@ namespace OracleOdbcApi.Controllers
                 {
                     var row = new Dictionary<string, object>();
                     for (int i = 0; i < reader.FieldCount; i++)
-                        row[reader.GetName(i)] = reader.GetValue(i);
+                    {
+                        row[reader.GetName(i)] = reader.IsDBNull(i) ? null! : reader.GetValue(i);
+                    }
                     results.Add(row);
                 }
 
@@ -39,7 +53,7 @@ namespace OracleOdbcApi.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new { error = ex.Message });
+                return StatusCode(500, new { error = ex.Message });
             }
         }
     }

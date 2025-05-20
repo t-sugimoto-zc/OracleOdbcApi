@@ -21,7 +21,7 @@ RUN apt-get install -y wget
 RUN apt-get install -y unzip
 RUN apt-get install -y unixodbc
 RUN apt-get install -y curl
-RUN apt-get install -y gnupg
+RUN apt-get install -y --allow-downgrades gnupg gpgv
 
 # Oracle Instant Clientのインストール
 COPY instantclient-basic-linux.x64-12.2.0.1.0.zip /opt/oracle/
