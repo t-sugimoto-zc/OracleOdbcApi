@@ -71,3 +71,5 @@ COPY --from=build /app/publish /app
 WORKDIR /app
 ENTRYPOINT ["dotnet", "OracleOdbcApi.dll"]
 
+ENV ASPNETCORE_URLS=http://0.0.0.0:5000
+
